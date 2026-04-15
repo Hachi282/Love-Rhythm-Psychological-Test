@@ -25,21 +25,6 @@ python -m http.server 8000
 
 `http://localhost:8000`
 
-## 部署到 GitHub Pages
-
-1. 建立 GitHub Repository，將整個資料夾內容推上去。
-2. 到 GitHub Repository 的 `Settings`。
-3. 打開 `Pages`。
-4. 在 `Build and deployment` 裡選擇：
-   - `Source`: `Deploy from a branch`
-   - `Branch`: `main`（或妳實際使用的分支）
-   - `Folder`: `/ (root)`
-5. 儲存後等待 GitHub Pages 發布完成。
-
-之後網站會出現在：
-
-`https://你的帳號.github.io/你的-repo-名稱/`
-
 ## 自訂方向
 
 - 想改題目文字：編輯 `questions.js`
