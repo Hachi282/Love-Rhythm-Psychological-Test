@@ -573,7 +573,7 @@ select {
 
 @media (max-width: 640px) {
   body[data-view='question'] {
-    overflow: hidden;
+    overflow-y: auto;
   }
 
   body[data-view='question'] .page {
@@ -590,7 +590,8 @@ select {
     border-left: 0;
     border-right: 0;
     border-top: 0;
-    min-height: 100dvh;
+    min-height: auto;
+    overflow: visible;
   }
 
   .page {
@@ -607,7 +608,7 @@ select {
   }
 
   body[data-view='question'] .view-card {
-    padding: 14px 14px calc(16px + env(safe-area-inset-bottom));
+    padding: 14px 14px calc(104px + env(safe-area-inset-bottom));
   }
 
   .topbar h1 {
@@ -615,8 +616,9 @@ select {
   }
 
   body[data-view='question'] .question-card {
-    min-height: 100dvh;
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
   }
 
   body[data-view='question'] .progress-header {
@@ -643,16 +645,14 @@ select {
   }
 
   body[data-view='question'] .question-block {
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    min-height: 0;
+    display: block;
+    min-height: auto;
   }
 
   body[data-view='question'] .options-grid {
     gap: 10px;
-    overflow-y: auto;
-    padding-right: 2px;
-    overscroll-behavior: contain;
+    overflow: visible;
+    padding-right: 0;
   }
 
   body[data-view='question'] .option-card {
@@ -682,9 +682,12 @@ select {
   }
 
   body[data-view='question'] .nav-row {
-    position: sticky;
+    position: fixed;
+    left: 0;
+    right: 0;
     bottom: 0;
-    margin: 14px -14px calc(-16px - env(safe-area-inset-bottom));
+    z-index: 30;
+    margin: 0;
     padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
     background: linear-gradient(180deg, rgba(246, 239, 231, 0), rgba(246, 239, 231, 0.88) 20%, rgba(246, 239, 231, 0.98));
     backdrop-filter: blur(10px);
