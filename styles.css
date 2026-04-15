@@ -572,26 +572,6 @@ select {
 }
 
 @media (max-width: 640px) {
-  body[data-view='question'] {
-    overflow: auto;
-  }
-
-  body[data-view='question'] .page {
-    width: min(100% - 16px, 1120px);
-    padding-top: 12px;
-  }
-
-  body[data-view='question'] .topbar {
-    display: block;
-    padding-bottom: 12px;
-  }
-
-  body[data-view='question'] .app-panel {
-    border-radius: 20px;
-    min-height: auto;
-    overflow: visible;
-  }
-
   .page {
     width: min(100% - 20px, 1120px);
     padding-top: 18px;
@@ -605,33 +585,24 @@ select {
     padding: 22px 16px;
   }
 
-  body[data-view='question'] .view-card {
-    padding: 16px 14px calc(90px + env(safe-area-inset-bottom));
-  }
-
   .topbar h1 {
     font-size: 2.3rem;
   }
 
-  body[data-view='question'] .question-card {
-    display: block;
-    min-height: auto;
-  }
-
-  body[data-view='question'] .progress-header {
+  .progress-header {
     gap: 10px;
   }
 
-  body[data-view='question'] .progress-header h2 {
+  .progress-header h2 {
     font-size: 1.15rem;
     margin-top: 6px;
   }
 
-  body[data-view='question'] .progress-copy {
+  .progress-copy {
     font-size: 0.9rem;
   }
 
-  body[data-view='question'] .progress-track {
+  .progress-track {
     margin: 12px 0 16px;
   }
 
@@ -641,30 +612,20 @@ select {
     line-height: 1.55;
   }
 
-  body[data-view='question'] .question-block {
-    display: block;
-    min-height: auto;
-  }
-
-  body[data-view='question'] .options-grid {
+  .options-grid {
     gap: 10px;
-    overflow: visible;
-    padding-right: 0;
-  }
-
-  body[data-view='question'] .option-card {
-    gap: 10px;
-    padding: 12px;
-    border-radius: 14px;
-  }
-
-  body[data-view='question'] .option-text {
-    font-size: 0.94rem;
-    line-height: 1.55;
   }
 
   .option-card {
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
     grid-template-columns: 1fr;
+  }
+
+  .option-text {
+    font-size: 0.94rem;
+    line-height: 1.55;
   }
 
   .option-index {
@@ -676,16 +637,6 @@ select {
   .cta-row,
   .song-links {
     flex-direction: column;
-  }
-
-  body[data-view='question'] .nav-row {
-    position: sticky;
-    bottom: 0;
-    z-index: 30;
-    margin-top: 16px;
-    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
-    background: linear-gradient(180deg, rgba(246, 239, 231, 0), rgba(246, 239, 231, 0.88) 20%, rgba(246, 239, 231, 0.98));
-    backdrop-filter: blur(10px);
   }
 
   .button {
