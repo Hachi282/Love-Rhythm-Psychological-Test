@@ -365,6 +365,7 @@ function renderResult() {
   const profile = getProfileCopy(result.attribute, intensity);
   const songLinks = getSongLinks(result.song);
   const songStory = getSongStory(state.resultPayload, profile);
+  const compactAnalysis = getCompactAnalysis(result.analysis);
   const details = resultDetails[state.resultPayload.key];
   const pairAnalysis = state.pairSeed ? getPairAnalysis(state.resultPayload, state.pairSeed) : null;
 
@@ -421,7 +422,7 @@ function renderResult() {
               <span class="feature-label">人格分析</span>
               <h3>妳的感情，不太會只是剛好而已</h3>
             </div>
-            <p>${result.analysis}</p>
+            <p>${compactAnalysis}</p>
           </article>
 
           <article class="copy-block quote-block quote-card">
@@ -621,6 +622,23 @@ function getSongLinks(song) {
     youtube: `https://www.youtube.com/results?search_query=${query}`,
     spotify: `https://open.spotify.com/search/${query}`
   };
+}
+
+function getCompactAnalysis(text) {
+  const segments = text
+    .split(/(?<=[。！？!?])/u)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (segments.length >= 2) {
+    return segments.slice(0, 2).join('');
+  }
+
+  if (segments.length === 1 && segments[0].length > 68) {
+    return `${segments[0].slice(0, 68).trim()}…`;
+  }
+
+  return text;
 }
 
 function getSongStory(resultPayload, profile) {
