@@ -249,6 +249,20 @@ select {
   font-size: 1.2rem;
 }
 
+.pair-hint {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(220, 109, 87, 0.12), rgba(255, 255, 255, 0.78));
+  border: 1px solid rgba(220, 109, 87, 0.16);
+}
+
+.pair-hint strong {
+  display: block;
+  margin: 8px 0 6px;
+  font-size: 1.18rem;
+}
+
 .progress-header,
 .result-heading,
 .axis-head {
@@ -295,6 +309,11 @@ select {
   color: var(--accent-deep);
   font-size: 0.92rem;
   font-weight: 700;
+}
+
+.section-stack {
+  display: grid;
+  gap: 8px;
 }
 
 .progress-track,
@@ -399,6 +418,43 @@ select {
   gap: 18px;
 }
 
+.detail-block {
+  display: grid;
+  gap: 18px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.detail-card,
+.pair-card {
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(31, 36, 48, 0.07);
+}
+
+.detail-label {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--accent-deep);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail-card p,
+.pair-card p,
+.pair-panel-head p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
 .feature-block {
   background: linear-gradient(135deg, rgba(220, 109, 87, 0.14), rgba(255, 255, 255, 0.84));
 }
@@ -433,6 +489,69 @@ select {
   position: sticky;
   top: 24px;
   background: linear-gradient(180deg, rgba(255, 252, 249, 0.94), rgba(244, 248, 247, 0.9));
+}
+
+.pair-panel {
+  margin-top: 24px;
+  padding: 24px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 251, 248, 0.88), rgba(245, 250, 249, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.78);
+}
+
+.pair-panel-invite {
+  margin-top: 32px;
+}
+
+.pair-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 18px;
+}
+
+.pair-panel-head h3 {
+  margin: 8px 0 12px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: clamp(1.4rem, 2.8vw, 2rem);
+}
+
+.pair-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.pair-mode {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(43, 122, 120, 0.12);
+  color: var(--teal);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.pair-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 20px;
+}
+
+.pair-pill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(31, 36, 48, 0.07);
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.pair-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .axis-row + .axis-row {
@@ -555,6 +674,11 @@ select {
     display: grid;
   }
 
+  .detail-grid,
+  .pair-grid {
+    grid-template-columns: 1fr;
+  }
+
   .progress-copy,
   .result-meta,
   .axis-value {
@@ -635,7 +759,8 @@ select {
   .nav-row,
   .result-actions,
   .cta-row,
-  .song-links {
+  .song-links,
+  .pair-actions {
     flex-direction: column;
   }
 
