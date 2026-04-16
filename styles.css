@@ -163,7 +163,9 @@ select {
 }
 
 .hero-card h2,
-.result-heading h2 {
+.result-heading h2,
+.result-identity h2,
+.pair-panel-head h3 {
   margin: 8px 0 16px;
   font-size: clamp(1.8rem, 3.8vw, 3.2rem);
   line-height: 1.15;
@@ -249,6 +251,20 @@ select {
   font-size: 1.2rem;
 }
 
+.pair-hint {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(220, 109, 87, 0.12), rgba(255, 255, 255, 0.78));
+  border: 1px solid rgba(220, 109, 87, 0.16);
+}
+
+.pair-hint strong {
+  display: block;
+  margin: 8px 0 6px;
+  font-size: 1.18rem;
+}
+
 .progress-header,
 .result-heading,
 .axis-head {
@@ -281,6 +297,73 @@ select {
   line-height: 1.8;
 }
 
+.result-card {
+  display: grid;
+  gap: 24px;
+}
+
+.result-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(31, 36, 48, 0.08);
+}
+
+.result-identity {
+  min-width: 0;
+}
+
+.result-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.result-overview,
+.result-body {
+  display: grid;
+  gap: 18px;
+  align-items: start;
+}
+
+.result-overview {
+  grid-template-columns: minmax(0, 1.16fr) minmax(280px, 0.84fr);
+}
+
+.result-body {
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.72fr);
+}
+
+.result-overview-stack,
+.result-main {
+  display: grid;
+  gap: 18px;
+}
+
+.result-spotlight {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(255, 250, 246, 0.94), rgba(248, 241, 235, 0.9));
+}
+
+.result-spotlight h3 {
+  font-size: clamp(1.35rem, 2.4vw, 1.92rem);
+}
+
+.result-spotlight p {
+  font-size: 1.02rem;
+}
+
+.result-song-card,
+.quote-card {
+  align-self: start;
+  align-content: start;
+}
+
 .meta-chips {
   display: flex;
   flex-wrap: wrap;
@@ -295,6 +378,11 @@ select {
   color: var(--accent-deep);
   font-size: 0.92rem;
   font-weight: 700;
+}
+
+.section-stack {
+  display: grid;
+  gap: 8px;
 }
 
 .progress-track,
@@ -378,10 +466,6 @@ select {
   align-items: center;
 }
 
-.result-heading {
-  align-items: start;
-}
-
 .result-actions {
   justify-content: flex-end;
   margin-top: 0;
@@ -397,6 +481,43 @@ select {
 .result-main {
   display: grid;
   gap: 18px;
+}
+
+.detail-block {
+  display: grid;
+  gap: 18px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.detail-card,
+.pair-card {
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(31, 36, 48, 0.07);
+}
+
+.detail-label {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--accent-deep);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail-card p,
+.pair-card p,
+.pair-panel-head p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
 }
 
 .feature-block {
@@ -416,6 +537,41 @@ select {
   margin-top: 18px;
 }
 
+.song-story {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(31, 36, 48, 0.08);
+}
+
+.song-story-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.song-story-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.song-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.song-tag {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(31, 36, 48, 0.07);
+  color: var(--accent-deep);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .button-link {
   text-decoration: none;
 }
@@ -429,10 +585,91 @@ select {
   line-height: 1.9;
 }
 
+.quote-card {
+  background: linear-gradient(135deg, rgba(245, 250, 249, 0.94), rgba(255, 255, 255, 0.88));
+}
+
+.quote-card blockquote {
+  margin-top: 6px;
+}
+
 .score-card {
   position: sticky;
   top: 24px;
   background: linear-gradient(180deg, rgba(255, 252, 249, 0.94), rgba(244, 248, 247, 0.9));
+}
+
+.pair-panel {
+  margin-top: 24px;
+  padding: 24px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 251, 248, 0.88), rgba(245, 250, 249, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.78);
+}
+
+.pair-panel-invite {
+  margin-top: 32px;
+}
+
+.pair-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 18px;
+}
+
+.pair-panel-head h3 {
+  margin: 8px 0 12px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: clamp(1.4rem, 2.8vw, 2rem);
+}
+
+.pair-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  align-items: center;
+}
+
+.pair-mode {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(43, 122, 120, 0.12);
+  color: var(--teal);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.pair-outlook {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(220, 109, 87, 0.1);
+  color: var(--accent-deep);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.pair-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 20px;
+}
+
+.pair-pill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(31, 36, 48, 0.07);
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.pair-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .axis-row + .axis-row {
@@ -555,6 +792,17 @@ select {
     display: grid;
   }
 
+  .result-hero,
+  .result-overview,
+  .result-body {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-grid,
+  .pair-grid {
+    grid-template-columns: 1fr;
+  }
+
   .progress-copy,
   .result-meta,
   .axis-value {
@@ -564,6 +812,11 @@ select {
   .result-actions {
     justify-content: flex-start;
     padding-top: 0;
+  }
+
+  .result-toolbar,
+  .pair-actions {
+    justify-content: flex-start;
   }
 
   .score-card {
@@ -583,6 +836,18 @@ select {
 
   .view-card {
     padding: 22px 16px;
+  }
+
+  .result-card {
+    gap: 18px;
+  }
+
+  .result-hero {
+    gap: 14px;
+  }
+
+  .result-spotlight {
+    padding: 20px 18px;
   }
 
   .topbar h1 {
@@ -633,13 +898,20 @@ select {
   }
 
   .nav-row,
-  .result-actions,
   .cta-row,
-  .song-links {
+  .song-links,
+  .pair-actions,
+  .result-toolbar {
     flex-direction: column;
   }
 
   .button {
     width: 100%;
+  }
+
+  .pair-mode,
+  .pair-outlook {
+    width: 100%;
+    text-align: center;
   }
 }

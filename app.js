@@ -1,5 +1,6 @@
 import questions from './questions.js';
 import { calculateResult } from './engine.js';
+import resultDetails from './result-details.js';
 
 const app = document.querySelector('#app');
 
@@ -27,6 +28,14 @@ const axisMeta = [
   }
 ];
 
+const detailMeta = [
+  { key: 'loveLike', label: '妳愛起來像' },
+  { key: 'fear', label: '妳其實怕的是' },
+  { key: 'misread', label: '別人最容易看錯妳的地方' },
+  { key: 'desire', label: '妳真正想被怎麼愛' },
+  { key: 'warning', label: '先別讓自己走到這裡' }
+];
+
 const state = {
   status: 'loading',
   currentIndex: 0,
@@ -34,6 +43,8 @@ const state = {
   resultsMap: null,
   resultPayload: null,
   copied: false,
+  pairCopied: false,
+  pairSeed: null,
   errorMessage: ''
 };
 
@@ -50,6 +61,7 @@ async function init() {
     }
 
     state.resultsMap = await response.json();
+    state.pairSeed = getPairSeedFromUrl();
     state.status = 'intro';
   } catch (error) {
     state.status = 'error';
@@ -114,6 +126,18 @@ app.addEventListener('click', async (event) => {
   if (action === 'share') {
     await copyResult();
     render();
+    return;
+  }
+
+  if (action === 'share-pair') {
+    await copyPairLink();
+    render();
+    return;
+  }
+
+  if (action === 'clear-pair') {
+    clearPairSeed();
+    render();
   }
 });
 
@@ -122,6 +146,7 @@ function resetQuiz() {
   state.answers = Array(questions.length).fill(null);
   state.resultPayload = null;
   state.copied = false;
+  state.pairCopied = false;
   state.errorMessage = '';
 }
 
@@ -151,7 +176,7 @@ async function copyResult() {
     `關係定位：${profile.role}`,
     `情感節奏：${profile.intensity}`,
     `推薦歌曲：${result.song}`,
-    location.href
+    getBasePageUrl()
   ].join('\n');
 
   try {
@@ -159,6 +184,27 @@ async function copyResult() {
     state.copied = true;
   } catch (error) {
     state.copied = false;
+    console.error(error);
+  }
+}
+
+async function copyPairLink() {
+  if (!state.resultPayload?.result) {
+    return;
+  }
+
+  const pairUrl = buildPairUrl(state.resultPayload);
+  const shareText = [
+    `我先測完了，換妳。`,
+    '做完之後，網站會直接把我們的結果放在一起對照。',
+    pairUrl
+  ].join('\n');
+
+  try {
+    await navigator.clipboard.writeText(shareText);
+    state.pairCopied = true;
+  } catch (error) {
+    state.pairCopied = false;
     console.error(error);
   }
 }
@@ -210,8 +256,10 @@ function renderIntro() {
           <p class="body-copy">
             每一題都會替三個軸向累積分數，最後組合出 16 種人格結果，附上分析、對白與推薦歌曲。
           </p>
+          ${state.pairSeed ? renderPairHint() : ''}
           <div class="cta-row">
-            <button class="button button-primary" data-action="start">開始測驗</button>
+            <button class="button button-primary" data-action="start">${state.pairSeed ? '開始妳的部分' : '開始測驗'}</button>
+            ${state.pairSeed ? '<button class="button button-secondary" data-action="clear-pair">先不要配對</button>' : ''}
           </div>
         </div>
 
@@ -234,6 +282,16 @@ function renderIntro() {
         </div>
       </div>
     </section>
+  `;
+}
+
+function renderPairHint() {
+  return `
+    <article class="pair-hint">
+      <span class="info-kicker">雙人模式</span>
+      <strong>她先測出了《${state.pairSeed.title}》</strong>
+      <p>這次輪到妳。做完後，網站會直接把妳們兩個的節奏放在一起看。</p>
+    </article>
   `;
 }
 
@@ -306,11 +364,14 @@ function renderResult() {
   const { result, scores, intensity } = state.resultPayload;
   const profile = getProfileCopy(result.attribute, intensity);
   const songLinks = getSongLinks(result.song);
+  const songStory = getSongStory(state.resultPayload, profile);
+  const details = resultDetails[state.resultPayload.key];
+  const pairAnalysis = state.pairSeed ? getPairAnalysis(state.resultPayload, state.pairSeed) : null;
 
   return `
     <section class="view-card result-card">
-      <div class="result-heading">
-        <div>
+      <div class="result-hero">
+        <div class="result-identity">
           <p class="section-tag">Result</p>
           <h2>${result.title}</h2>
           <p class="result-summary">${profile.summary}</p>
@@ -319,40 +380,61 @@ function renderResult() {
             <span class="meta-chip">情感節奏：${profile.intensity}</span>
           </div>
         </div>
-        <div class="result-actions">
+        <div class="result-toolbar" aria-label="結果操作">
           <button class="button button-primary button-compact" type="button" data-action="share">
-            ${state.copied ? '已複製結果' : '複製分享文字'}
+            ${state.copied ? '已複製結果' : '複製結果文字'}
           </button>
           <button class="button button-secondary button-compact" type="button" data-action="restart">再測一次</button>
         </div>
       </div>
 
-      <div class="result-layout">
-        <div class="result-main">
-          <article class="feature-block">
-            <span class="feature-label">推薦歌曲</span>
-            <p class="feature-song">${result.song}</p>
-            <div class="song-links">
-              <a class="button button-secondary button-link button-compact" href="${songLinks.youtube}" target="_blank" rel="noreferrer">
-                YouTube 試聽
-              </a>
-              <a class="button button-secondary button-link button-compact" href="${songLinks.spotify}" target="_blank" rel="noreferrer">
-                Spotify 搜尋
-              </a>
+      <div class="result-overview">
+        <article class="feature-block result-song-card">
+          <span class="feature-label">推薦歌曲</span>
+          <p class="feature-song">${result.song}</p>
+          <div class="song-links">
+            <a class="button button-secondary button-link button-compact" href="${songLinks.youtube}" target="_blank" rel="noreferrer">
+              YouTube 試聽
+            </a>
+            <a class="button button-secondary button-link button-compact" href="${songLinks.spotify}" target="_blank" rel="noreferrer">
+              Spotify 搜尋
+            </a>
+          </div>
+          <div class="song-story">
+            <div class="song-story-copy">
+              <span class="detail-label">這首像妳的地方</span>
+              <p>${songStory.reason}</p>
             </div>
-          </article>
+            <div class="song-story-copy">
+              <span class="detail-label">最適合播放的時刻</span>
+              <p>${songStory.timing}</p>
+            </div>
+            <div class="song-tags" aria-label="歌曲情緒標籤">
+              ${songStory.tags.map((tag) => `<span class="song-tag">${tag}</span>`).join('')}
+            </div>
+          </div>
+        </article>
 
-          <article class="copy-block">
-            <h3>人格分析</h3>
+        <div class="result-overview-stack">
+          <article class="copy-block result-spotlight">
+            <div class="section-stack">
+              <span class="feature-label">人格分析</span>
+              <h3>妳的感情，不太會只是剛好而已</h3>
+            </div>
             <p>${result.analysis}</p>
           </article>
 
-          <article class="copy-block quote-block">
-            <h3>專屬對白</h3>
+          <article class="copy-block quote-block quote-card">
+            <span class="feature-label">專屬對白</span>
             <blockquote>${result.dialogue}</blockquote>
           </article>
         </div>
+      </div>
 
+      <div class="result-body">
+        <div class="result-main">
+          ${details ? renderDetailBlock(details) : ''}
+        </div>
         <aside class="result-side">
           <div class="score-card">
             <h3>妳的關係輪廓</h3>
@@ -360,6 +442,87 @@ function renderResult() {
             ${axisMeta.map((axis) => renderAxis(axis, scores[axis.key])).join('')}
           </div>
         </aside>
+      </div>
+
+      ${pairAnalysis ? renderPairPanel(pairAnalysis) : renderPairInvite()}
+    </section>
+  `;
+}
+
+function renderDetailBlock(details) {
+  return `
+    <article class="copy-block detail-block">
+      <div class="section-stack">
+        <span class="feature-label">再往下一點</span>
+        <h3>那些妳嘴上不一定會先說的</h3>
+      </div>
+      <div class="detail-grid">
+        ${detailMeta
+          .map(
+            (item) => `
+              <div class="detail-card">
+                <span class="detail-label">${item.label}</span>
+                <p>${details[item.key]}</p>
+              </div>
+            `
+          )
+          .join('')}
+      </div>
+    </article>
+  `;
+}
+
+function renderPairInvite() {
+  return `
+    <section class="pair-panel pair-panel-invite">
+      <div class="pair-panel-head">
+        <div>
+          <p class="section-tag">Pair Mode</p>
+          <h3>想看她跟妳是不是同一種瘋法？</h3>
+          <p>把專屬連結丟給她。她做完之後，網站會直接把妳們兩個的結果放在一起對照。</p>
+        </div>
+        <div class="pair-actions">
+          <button class="button button-primary button-compact" type="button" data-action="share-pair">
+            ${state.pairCopied ? '已複製配對連結' : '丟給她來測'}
+          </button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderPairPanel(pairAnalysis) {
+  return `
+    <section class="pair-panel">
+      <div class="pair-panel-head">
+        <div>
+          <p class="section-tag">Pair Mode</p>
+          <h3>妳們兩個放在一起看</h3>
+          <p>${pairAnalysis.summary}</p>
+        </div>
+        <div class="pair-actions">
+          <span class="pair-mode">${pairAnalysis.mode}</span>
+          <span class="pair-outlook">${pairAnalysis.outlook}</span>
+          <button class="button button-secondary button-compact" type="button" data-action="clear-pair">清掉她的結果</button>
+        </div>
+      </div>
+
+      <div class="pair-pill-row">
+        <span class="pair-pill">她先測出：${state.pairSeed.title}</span>
+        <span class="pair-pill">妳這次是：${state.resultPayload.result.title}</span>
+      </div>
+
+      <div class="pair-grid">
+        ${pairAnalysis.cards
+          .map(
+            (card) => `
+              <article class="pair-card">
+                <span class="detail-label">${card.label}</span>
+                <p>${card.text}</p>
+              </article>
+            `
+          )
+          .join('')}
       </div>
     </section>
   `;
@@ -430,7 +593,10 @@ function getProfileCopy(attribute, intensity) {
     'Alpha / Dom': '溫柔主導型',
     'Alpha / Dominant': '強勢主導型',
     'Omega / Switch': '流動切換型',
-    'Omega / submissive': '深度依附型'
+    'Omega / submissive': '深度依附型',
+    '領奏者 (The Lead)': '領奏者',
+    '轉調者 (The Modulator)': '轉調者',
+    '和聲者 (The Harmony)': '和聲者'
   };
 
   const intensityMap = {
@@ -455,4 +621,350 @@ function getSongLinks(song) {
     youtube: `https://www.youtube.com/results?search_query=${query}`,
     spotify: `https://open.spotify.com/search/${query}`
   };
+}
+
+function getSongStory(resultPayload, profile) {
+  const dominantAxis = [...axisMeta]
+    .map((axis) => ({
+      ...axis,
+      score: resultPayload.scores[axis.key]
+    }))
+    .sort((left, right) => Math.abs(right.score) - Math.abs(left.score))[0];
+
+  const tags = [profile.role, profile.intensity, dominantAxis.score >= 0 ? dominantAxis.positive : dominantAxis.negative];
+
+  const reasonMap = {
+    c: dominantAxis.score >= 0
+      ? '這首歌先抓住人的，不只是旋律，而是那種很知道自己要什麼的氣場。妳的愛也有這種把節奏握在手裡的感覺。'
+      : '這首歌不是靠壓迫感取勝，而是靠一種願意陪人慢慢走進去的溫度。妳的愛也比較像這樣，柔軟但不空。',
+    e: dominantAxis.score >= 0
+      ? '它像妳在感情裡的張力，情緒一上來就很難裝作若無其事，會讓人一聽就知道妳不是淡淡喜歡。'
+      : '它不是那種一下子把情緒砸出來的歌，反而更像妳把很多感受含在心裡，越聽越有後勁。',
+    i: dominantAxis.score >= 0
+      ? '這首歌有一點拉扯、有一點征服感，像妳在心動時不只是想靠近，還想確認自己是不是能讓對方也失控。'
+      : '它最迷人的不是刺激，而是那種慢慢包進去的沉浸感。妳的愛也是，真正動心時會想把人安穩地留在自己身邊。'
+  };
+
+  let timing = '適合在剛測完、很想把這個結果丟給她看的時候播。';
+
+  if (resultPayload.intensity === 'EXT' && resultPayload.scores.e >= 0) {
+    timing = '適合在情緒剛被點燃、訊息打到一半又刪掉的時候播。';
+  } else if (resultPayload.intensity === 'EXT') {
+    timing = '適合在夜裡情緒開始往深處沉下去、表面還裝得很穩的時候播。';
+  } else if (resultPayload.scores.i < 0) {
+    timing = '適合在妳想慢慢靠近一個人，或者想把誰抱進自己節奏裡的時候播。';
+  } else if (resultPayload.scores.c >= 0) {
+    timing = '適合在妳已經知道自己想要什麼，只差一點點勇氣把節奏帶起來的時候播。';
+  }
+
+  return {
+    reason: reasonMap[dominantAxis.key],
+    timing,
+    tags
+  };
+}
+
+function getBasePageUrl() {
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.hash = '';
+  return url.toString();
+}
+
+function buildPairUrl(resultPayload) {
+  const url = new URL(getBasePageUrl());
+  url.searchParams.set('pair', encodePairPayload(getPairPayload(resultPayload)));
+  return url.toString();
+}
+
+function getPairPayload(resultPayload) {
+  return {
+    key: resultPayload.key,
+    title: resultPayload.result.title,
+    attribute: resultPayload.result.attribute,
+    intensity: resultPayload.intensity,
+    scores: resultPayload.scores
+  };
+}
+
+function getPairSeedFromUrl() {
+  const url = new URL(window.location.href);
+  const raw = url.searchParams.get('pair');
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const payload = decodePairPayload(raw);
+    return isValidPairPayload(payload) ? payload : null;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+function clearPairSeed() {
+  state.pairSeed = null;
+  state.pairCopied = false;
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete('pair');
+  window.history.replaceState({}, '', url.toString());
+}
+
+function encodePairPayload(payload) {
+  const json = JSON.stringify(payload);
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function decodePairPayload(encoded) {
+  const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/');
+  const padding = normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4));
+  const binary = atob(normalized + padding);
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function isValidPairPayload(payload) {
+  return Boolean(
+    payload &&
+      typeof payload.key === 'string' &&
+      typeof payload.title === 'string' &&
+      typeof payload.attribute === 'string' &&
+      typeof payload.intensity === 'string' &&
+      payload.scores &&
+      ['c', 'e', 'i'].every((axis) => typeof payload.scores[axis] === 'number')
+  );
+}
+
+function getPairAnalysis(currentPayload, partnerPayload) {
+  const diffs = axisMeta.map((axis) => ({
+    ...axis,
+    diff: Math.abs(currentPayload.scores[axis.key] - partnerPayload.scores[axis.key])
+  }));
+  const [closestAxis] = [...diffs].sort((left, right) => left.diff - right.diff);
+  const [widestAxis] = [...diffs].sort((left, right) => right.diff - left.diff);
+  const totalGap = diffs.reduce((sum, axis) => sum + axis.diff, 0);
+  const closeAxisCount = diffs.filter((axis) => axis.diff <= 1).length;
+  const wideAxisCount = diffs.filter((axis) => axis.diff >= 3).length;
+  const sameSideCount = axisMeta.filter((axis) => {
+    const left = Math.sign(currentPayload.scores[axis.key]);
+    const right = Math.sign(partnerPayload.scores[axis.key]);
+    return left === right;
+  }).length;
+  const mode = getPairMode(totalGap, sameSideCount, closeAxisCount, wideAxisCount, currentPayload, partnerPayload);
+
+  return {
+    mode: mode.label,
+    outlook: mode.outlook,
+    summary: getPairSummary(mode.key, totalGap, sameSideCount, currentPayload, partnerPayload),
+    cards: [
+      {
+        label: '這組真的合得來的地方',
+        text: getPairFitLine(mode.key, closestAxis.key, currentPayload, partnerPayload)
+      },
+      {
+        label: '先把妳們吸住的地方',
+        text: getPairAttractionLine(closestAxis.key, currentPayload, partnerPayload)
+      },
+      {
+        label: '之後最容易卡住的地方',
+        text: getPairFrictionLine(widestAxis.key, currentPayload, partnerPayload)
+      },
+      {
+        label: '真的走音時會怎樣',
+        text: getPairConflictLine(currentPayload, partnerPayload)
+      },
+      {
+        label: '如果想走久一點',
+        text: getPairAdviceLine(widestAxis.key, currentPayload, partnerPayload)
+      }
+    ]
+  };
+}
+
+function getPairMode(totalGap, sameSideCount, closeAxisCount, wideAxisCount, currentPayload, partnerPayload) {
+  if (currentPayload.key === partnerPayload.key) {
+    return { key: 'mirror', label: '鏡像共振', outlook: '很合拍，但會互相放大' };
+  }
+
+  if (totalGap <= 3 || (closeAxisCount >= 2 && sameSideCount >= 2 && totalGap <= 5)) {
+    return { key: 'steady', label: '穩定同頻', outlook: '最容易順著愛下去' };
+  }
+
+  if (sameSideCount === 3 && totalGap <= 7) {
+    return { key: 'aligned', label: '默契靠近', outlook: '磨合成本低' };
+  }
+
+  if (sameSideCount <= 1 && wideAxisCount >= 2) {
+    return { key: 'contrast', label: '高張反差', outlook: '火花強，衝擊也強' };
+  }
+
+  if (sameSideCount <= 1) {
+    return { key: 'complement', label: '互補成形', outlook: '有機會補到彼此的缺口' };
+  }
+
+  return { key: 'tension', label: '曖昧拉扯', outlook: '能不能合，要看會不會講清楚' };
+}
+
+function getPairSummary(modeKey, totalGap, sameSideCount, currentPayload, partnerPayload) {
+  if (modeKey === 'mirror') {
+    return '妳們像是同一首歌的不同段落。懂彼此很快，踩到彼此最敏感的地方也會很快。';
+  }
+
+  if (modeKey === 'steady') {
+    return '這組是真的偏合得來。不是沒有摩擦，而是妳們大多數時候用的是相近的語言，很多事不用硬翻譯。';
+  }
+
+  if (modeKey === 'aligned') {
+    return '妳們的底色很接近，靠近的方式也差不多。這種組合通常不難開始，難的是別把默契當成理所當然。';
+  }
+
+  if (modeKey === 'contrast') {
+    return '這組不是沒有可能，只是很吃成熟度。妳們很容易被彼此沒有的那一塊吸住，但也很容易因為差太多而磨到發燙。';
+  }
+
+  if (modeKey === 'complement') {
+    return '妳們不是同一種人，反而有機會把對方缺的那一塊補起來。這種組合能不能走久，關鍵不在相不像，而在會不會翻譯彼此。';
+  }
+
+  return '妳們有幾處真的對得上，也保留幾處很容易錯拍的反差。這不是注定會撞的組合，但確實需要比別人更會說清楚。';
+}
+
+function getPairFitLine(modeKey, axisKey, currentPayload, partnerPayload) {
+  const current = currentPayload.scores[axisKey];
+  const partner = partnerPayload.scores[axisKey];
+
+  if (modeKey === 'mirror') {
+    return '妳們最合得來的，是很多細節幾乎不用解釋。她懂妳不是靠猜，而是因為她自己也差不多就是這樣愛人的。';
+  }
+
+  if (axisKey === 'c') {
+    if (Math.sign(current) === Math.sign(partner) && current >= 0) {
+      return '妳們都不怕把節奏抓在手裡，做決定的速度和態度很像，所以很多事不需要互相拖著走。';
+    }
+
+    if (Math.sign(current) === Math.sign(partner) && current < 0) {
+      return '妳們都不是非得壓場才安心的人，反而比較會在留白和舒服的節奏裡慢慢靠近。';
+    }
+
+    return '一個比較會定方向，一個比較會接節奏。搭得好時，這種分工反而很穩。';
+  }
+
+  if (axisKey === 'e') {
+    if (current > 0 && partner > 0) {
+      return '妳們對情緒濃度的接受度差不多，很多熱烈和直接，在彼此這裡反而不需要被縮小。';
+    }
+
+    if (current < 0 && partner < 0) {
+      return '妳們都懂那種不必把每句話都喊出來的靠近，所以相處起來比較不需要硬撐場面。';
+    }
+
+    return '一個比較敢把情緒打開，一個比較會把場面收穩。對得上的時候，剛好能讓關係不至於失控。';
+  }
+
+  if (current > 0 && partner > 0) {
+    return '妳們對拉扯、刺激和心動感的想像很接近，很多別人覺得太燙的節奏，妳們反而覺得剛好。';
+  }
+
+  if (current < 0 && partner < 0) {
+    return '妳們都更懂陪伴型的靠近，願意把關係養深。這種組合通常不是最快上頭，卻常常最能沉下去。';
+  }
+
+  return '妳們靠近的方式不同，但剛好各自帶著對方沒有的那一面，所以相處得好時，反而很完整。';
+}
+
+function getPairAttractionLine(axisKey, currentPayload, partnerPayload) {
+  const current = currentPayload.scores[axisKey];
+  const partner = partnerPayload.scores[axisKey];
+
+  if (axisKey === 'c') {
+    if (Math.sign(current) === Math.sign(partner) && current >= 0) {
+      return '妳們都不太肯把主導權白白讓出去，所以會先被彼此那種「她不是好惹的」的感覺吸住。';
+    }
+
+    if (Math.sign(current) === Math.sign(partner) && current < 0) {
+      return '妳們都不是一上來就想壓場的人，反而容易在那種不用逞強的鬆裡慢慢靠近。';
+    }
+
+    return '一個習慣掌舵，一個比較順勢，這種分工本身就很容易讓人上癮。';
+  }
+
+  if (axisKey === 'e') {
+    if (current > 0 && partner > 0) {
+      return '妳們對情緒濃度都不低，火花會來得很快，也很難裝作沒事。';
+    }
+
+    if (current < 0 && partner < 0) {
+      return '妳們都不愛亂灑情緒，所以真正吸引人的，反而是那種不用說太多就懂的默契。';
+    }
+
+    return '一個會把氣氛點起來，一個會讓節奏穩住，這種反差很容易互相著迷。';
+  }
+
+  if (current > 0 && partner > 0) {
+    return '妳們都吃刺激和拉扯，所以曖昧期特別容易上頭。';
+  }
+
+  if (current < 0 && partner < 0) {
+    return '妳們都比較懂陪伴式的靠近，感情會在不聲不響裡慢慢沉下去。';
+  }
+
+  return '一個迷戀拉扯，一個渴望貼近，最先讓妳們心動的就是這種不一樣。';
+}
+
+function getPairFrictionLine(axisKey, currentPayload, partnerPayload) {
+  if (axisKey === 'c') {
+    return '最容易卡住的是誰來定節奏。靠太近時，一個會覺得自己被壓住，另一個會覺得對方怎麼總是不肯講清楚。';
+  }
+
+  if (axisKey === 'e') {
+    return '最容易走音的是情緒濃度。一個要把感受放到檯面上，一個習慣先收住，久了誰都覺得自己沒被懂。';
+  }
+
+  return '最容易失手的是對親密的理解。一個想要刺激感，一個想要安穩感，越愛越容易各自翻譯。';
+}
+
+function getPairConflictLine(currentPayload, partnerPayload) {
+  const currentE = currentPayload.scores.e;
+  const partnerE = partnerPayload.scores.e;
+
+  if (currentE - partnerE >= 2) {
+    return '真的吵起來，多半是妳先把情緒拉高，她比較像先退、先收，或者先裝作沒事。';
+  }
+
+  if (partnerE - currentE >= 2) {
+    return '真的吵起來，通常是她先把張力往上推，妳反而會先想把場面收住。';
+  }
+
+  if (currentE > 0 && partnerE > 0) {
+    return '妳們兩個都不是省火的人，一旦撞到點上，很容易越講越烈，誰都不想先退。';
+  }
+
+  if (currentE < 0 && partnerE < 0) {
+    return '妳們最危險的不是大吵，而是兩個人都悶著不說，表面很平，底下其實全在積水。';
+  }
+
+  return '妳們吵起來不一定很大聲，但節奏很容易一個急、一個慢，誰都覺得自己有說，卻沒被接到。';
+}
+
+function getPairAdviceLine(axisKey) {
+  if (axisKey === 'c') {
+    return '如果想走久一點，最先要講清楚的不是愛不愛，而是誰決定節奏、誰又可以喊停。';
+  }
+
+  if (axisKey === 'e') {
+    return '如果想走久一點，情緒高的那個要學會留白，情緒低的那個也要學會把話說明白。';
+  }
+
+  return '如果想走久一點，要先對齊妳們對親密的想像，不然越投入，越容易各自在不同語言裡受傷。';
 }
