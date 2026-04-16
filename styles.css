@@ -163,7 +163,9 @@ select {
 }
 
 .hero-card h2,
-.result-heading h2 {
+.result-heading h2,
+.result-identity h2,
+.pair-panel-head h3 {
   margin: 8px 0 16px;
   font-size: clamp(1.8rem, 3.8vw, 3.2rem);
   line-height: 1.15;
@@ -295,6 +297,72 @@ select {
   line-height: 1.8;
 }
 
+.result-card {
+  display: grid;
+  gap: 24px;
+}
+
+.result-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(31, 36, 48, 0.08);
+}
+
+.result-identity {
+  min-width: 0;
+}
+
+.result-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.result-overview,
+.result-body {
+  display: grid;
+  gap: 18px;
+  align-items: start;
+}
+
+.result-overview {
+  grid-template-columns: minmax(0, 1.16fr) minmax(280px, 0.84fr);
+}
+
+.result-body {
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.72fr);
+}
+
+.result-overview-stack,
+.result-main {
+  display: grid;
+  gap: 18px;
+}
+
+.result-spotlight {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(255, 250, 246, 0.94), rgba(248, 241, 235, 0.9));
+}
+
+.result-spotlight h3 {
+  font-size: clamp(1.35rem, 2.4vw, 1.92rem);
+}
+
+.result-spotlight p {
+  font-size: 1.02rem;
+}
+
+.result-song-card,
+.quote-card {
+  min-height: 100%;
+}
+
 .meta-chips {
   display: flex;
   flex-wrap: wrap;
@@ -397,10 +465,6 @@ select {
   align-items: center;
 }
 
-.result-heading {
-  align-items: start;
-}
-
 .result-actions {
   justify-content: flex-end;
   margin-top: 0;
@@ -485,6 +549,14 @@ select {
   line-height: 1.9;
 }
 
+.quote-card {
+  background: linear-gradient(135deg, rgba(245, 250, 249, 0.94), rgba(255, 255, 255, 0.88));
+}
+
+.quote-card blockquote {
+  margin-top: 6px;
+}
+
 .score-card {
   position: sticky;
   top: 24px;
@@ -521,6 +593,7 @@ select {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+  align-items: center;
 }
 
 .pair-mode {
@@ -530,6 +603,15 @@ select {
   color: var(--teal);
   font-size: 0.9rem;
   font-weight: 800;
+}
+
+.pair-outlook {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(220, 109, 87, 0.1);
+  color: var(--accent-deep);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .pair-pill-row {
@@ -674,6 +756,12 @@ select {
     display: grid;
   }
 
+  .result-hero,
+  .result-overview,
+  .result-body {
+    grid-template-columns: 1fr;
+  }
+
   .detail-grid,
   .pair-grid {
     grid-template-columns: 1fr;
@@ -688,6 +776,11 @@ select {
   .result-actions {
     justify-content: flex-start;
     padding-top: 0;
+  }
+
+  .result-toolbar,
+  .pair-actions {
+    justify-content: flex-start;
   }
 
   .score-card {
@@ -707,6 +800,18 @@ select {
 
   .view-card {
     padding: 22px 16px;
+  }
+
+  .result-card {
+    gap: 18px;
+  }
+
+  .result-hero {
+    gap: 14px;
+  }
+
+  .result-spotlight {
+    padding: 20px 18px;
   }
 
   .topbar h1 {
@@ -757,14 +862,20 @@ select {
   }
 
   .nav-row,
-  .result-actions,
   .cta-row,
   .song-links,
-  .pair-actions {
+  .pair-actions,
+  .result-toolbar {
     flex-direction: column;
   }
 
   .button {
     width: 100%;
+  }
+
+  .pair-mode,
+  .pair-outlook {
+    width: 100%;
+    text-align: center;
   }
 }

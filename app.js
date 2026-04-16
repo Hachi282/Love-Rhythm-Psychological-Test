@@ -369,8 +369,8 @@ function renderResult() {
 
   return `
     <section class="view-card result-card">
-      <div class="result-heading">
-        <div>
+      <div class="result-hero">
+        <div class="result-identity">
           <p class="section-tag">Result</p>
           <h2>${result.title}</h2>
           <p class="result-summary">${profile.summary}</p>
@@ -379,7 +379,7 @@ function renderResult() {
             <span class="meta-chip">情感節奏：${profile.intensity}</span>
           </div>
         </div>
-        <div class="result-actions">
+        <div class="result-toolbar" aria-label="結果操作">
           <button class="button button-primary button-compact" type="button" data-action="share">
             ${state.copied ? '已複製結果' : '複製結果文字'}
           </button>
@@ -387,9 +387,17 @@ function renderResult() {
         </div>
       </div>
 
-      <div class="result-layout">
-        <div class="result-main">
-          <article class="feature-block">
+      <div class="result-overview">
+        <article class="copy-block result-spotlight">
+          <div class="section-stack">
+            <span class="feature-label">人格分析</span>
+            <h3>妳的感情，不太會只是剛好而已</h3>
+          </div>
+          <p>${result.analysis}</p>
+        </article>
+
+        <div class="result-overview-stack">
+          <article class="feature-block result-song-card">
             <span class="feature-label">推薦歌曲</span>
             <p class="feature-song">${result.song}</p>
             <div class="song-links">
@@ -402,19 +410,17 @@ function renderResult() {
             </div>
           </article>
 
-          <article class="copy-block">
-            <h3>人格分析</h3>
-            <p>${result.analysis}</p>
-          </article>
-
-          ${details ? renderDetailBlock(details) : ''}
-
-          <article class="copy-block quote-block">
-            <h3>專屬對白</h3>
+          <article class="copy-block quote-block quote-card">
+            <span class="feature-label">專屬對白</span>
             <blockquote>${result.dialogue}</blockquote>
           </article>
         </div>
+      </div>
 
+      <div class="result-body">
+        <div class="result-main">
+          ${details ? renderDetailBlock(details) : ''}
+        </div>
         <aside class="result-side">
           <div class="score-card">
             <h3>妳的關係輪廓</h3>
@@ -482,6 +488,7 @@ function renderPairPanel(pairAnalysis) {
         </div>
         <div class="pair-actions">
           <span class="pair-mode">${pairAnalysis.mode}</span>
+          <span class="pair-outlook">${pairAnalysis.outlook}</span>
           <button class="button button-secondary button-compact" type="button" data-action="clear-pair">清掉她的結果</button>
         </div>
       </div>
@@ -692,16 +699,24 @@ function getPairAnalysis(currentPayload, partnerPayload) {
   const [closestAxis] = [...diffs].sort((left, right) => left.diff - right.diff);
   const [widestAxis] = [...diffs].sort((left, right) => right.diff - left.diff);
   const totalGap = diffs.reduce((sum, axis) => sum + axis.diff, 0);
+  const closeAxisCount = diffs.filter((axis) => axis.diff <= 1).length;
+  const wideAxisCount = diffs.filter((axis) => axis.diff >= 3).length;
   const sameSideCount = axisMeta.filter((axis) => {
     const left = Math.sign(currentPayload.scores[axis.key]);
     const right = Math.sign(partnerPayload.scores[axis.key]);
     return left === right;
   }).length;
+  const mode = getPairMode(totalGap, sameSideCount, closeAxisCount, wideAxisCount, currentPayload, partnerPayload);
 
   return {
-    mode: getPairMode(totalGap, sameSideCount, currentPayload, partnerPayload),
-    summary: getPairSummary(totalGap, sameSideCount, currentPayload, partnerPayload),
+    mode: mode.label,
+    outlook: mode.outlook,
+    summary: getPairSummary(mode.key, totalGap, sameSideCount, currentPayload, partnerPayload),
     cards: [
+      {
+        label: '這組真的合得來的地方',
+        text: getPairFitLine(mode.key, closestAxis.key, currentPayload, partnerPayload)
+      },
       {
         label: '先把妳們吸住的地方',
         text: getPairAttractionLine(closestAxis.key, currentPayload, partnerPayload)
@@ -722,36 +737,95 @@ function getPairAnalysis(currentPayload, partnerPayload) {
   };
 }
 
-function getPairMode(totalGap, sameSideCount, currentPayload, partnerPayload) {
+function getPairMode(totalGap, sameSideCount, closeAxisCount, wideAxisCount, currentPayload, partnerPayload) {
   if (currentPayload.key === partnerPayload.key) {
-    return '同型放大';
+    return { key: 'mirror', label: '鏡像共振', outlook: '很合拍，但會互相放大' };
   }
 
-  if (totalGap >= 9) {
-    return '反差上癮';
+  if (totalGap <= 3 || (closeAxisCount >= 2 && sameSideCount >= 2 && totalGap <= 5)) {
+    return { key: 'steady', label: '穩定同頻', outlook: '最容易順著愛下去' };
   }
 
-  if (sameSideCount >= 2) {
-    return '同頻拉扯';
+  if (sameSideCount === 3 && totalGap <= 7) {
+    return { key: 'aligned', label: '默契靠近', outlook: '磨合成本低' };
   }
 
-  return '互補試探';
+  if (sameSideCount <= 1 && wideAxisCount >= 2) {
+    return { key: 'contrast', label: '高張反差', outlook: '火花強，衝擊也強' };
+  }
+
+  if (sameSideCount <= 1) {
+    return { key: 'complement', label: '互補成形', outlook: '有機會補到彼此的缺口' };
+  }
+
+  return { key: 'tension', label: '曖昧拉扯', outlook: '能不能合，要看會不會講清楚' };
 }
 
-function getPairSummary(totalGap, sameSideCount, currentPayload, partnerPayload) {
-  if (currentPayload.key === partnerPayload.key) {
-    return `妳們像是同一首歌的不同段落。懂彼此的地方會很快，互相放大的地方也會很快。`;
+function getPairSummary(modeKey, totalGap, sameSideCount, currentPayload, partnerPayload) {
+  if (modeKey === 'mirror') {
+    return '妳們像是同一首歌的不同段落。懂彼此很快，踩到彼此最敏感的地方也會很快。';
   }
 
-  if (totalGap >= 9) {
-    return `妳們吸住彼此的，多半就是自己身上沒有的那一塊。這種關係很有火花，但也很容易磨到發燙。`;
+  if (modeKey === 'steady') {
+    return '這組是真的偏合得來。不是沒有摩擦，而是妳們大多數時候用的是相近的語言，很多事不用硬翻譯。';
   }
 
-  if (sameSideCount >= 2) {
-    return `妳們的底色其實不遠，所以很容易一開始就覺得「她懂我」。真正難的是，太像的人也最知道要往哪裡戳。`;
+  if (modeKey === 'aligned') {
+    return '妳們的底色很接近，靠近的方式也差不多。這種組合通常不難開始，難的是別把默契當成理所當然。';
   }
 
-  return `妳們有幾處剛好對得上，也保留幾處很容易錯拍的反差。這種關係通常最迷人，也最需要講清楚。`;
+  if (modeKey === 'contrast') {
+    return '這組不是沒有可能，只是很吃成熟度。妳們很容易被彼此沒有的那一塊吸住，但也很容易因為差太多而磨到發燙。';
+  }
+
+  if (modeKey === 'complement') {
+    return '妳們不是同一種人，反而有機會把對方缺的那一塊補起來。這種組合能不能走久，關鍵不在相不像，而在會不會翻譯彼此。';
+  }
+
+  return '妳們有幾處真的對得上，也保留幾處很容易錯拍的反差。這不是注定會撞的組合，但確實需要比別人更會說清楚。';
+}
+
+function getPairFitLine(modeKey, axisKey, currentPayload, partnerPayload) {
+  const current = currentPayload.scores[axisKey];
+  const partner = partnerPayload.scores[axisKey];
+
+  if (modeKey === 'mirror') {
+    return '妳們最合得來的，是很多細節幾乎不用解釋。她懂妳不是靠猜，而是因為她自己也差不多就是這樣愛人的。';
+  }
+
+  if (axisKey === 'c') {
+    if (Math.sign(current) === Math.sign(partner) && current >= 0) {
+      return '妳們都不怕把節奏抓在手裡，做決定的速度和態度很像，所以很多事不需要互相拖著走。';
+    }
+
+    if (Math.sign(current) === Math.sign(partner) && current < 0) {
+      return '妳們都不是非得壓場才安心的人，反而比較會在留白和舒服的節奏裡慢慢靠近。';
+    }
+
+    return '一個比較會定方向，一個比較會接節奏。搭得好時，這種分工反而很穩。';
+  }
+
+  if (axisKey === 'e') {
+    if (current > 0 && partner > 0) {
+      return '妳們對情緒濃度的接受度差不多，很多熱烈和直接，在彼此這裡反而不需要被縮小。';
+    }
+
+    if (current < 0 && partner < 0) {
+      return '妳們都懂那種不必把每句話都喊出來的靠近，所以相處起來比較不需要硬撐場面。';
+    }
+
+    return '一個比較敢把情緒打開，一個比較會把場面收穩。對得上的時候，剛好能讓關係不至於失控。';
+  }
+
+  if (current > 0 && partner > 0) {
+    return '妳們對拉扯、刺激和心動感的想像很接近，很多別人覺得太燙的節奏，妳們反而覺得剛好。';
+  }
+
+  if (current < 0 && partner < 0) {
+    return '妳們都更懂陪伴型的靠近，願意把關係養深。這種組合通常不是最快上頭，卻常常最能沉下去。';
+  }
+
+  return '妳們靠近的方式不同，但剛好各自帶著對方沒有的那一面，所以相處得好時，反而很完整。';
 }
 
 function getPairAttractionLine(axisKey, currentPayload, partnerPayload) {
