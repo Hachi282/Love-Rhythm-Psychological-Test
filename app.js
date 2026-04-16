@@ -388,26 +388,26 @@ function renderResult() {
       </div>
 
       <div class="result-overview">
-        <article class="copy-block result-spotlight">
-          <div class="section-stack">
-            <span class="feature-label">人格分析</span>
-            <h3>妳的感情，不太會只是剛好而已</h3>
+        <article class="feature-block result-song-card">
+          <span class="feature-label">推薦歌曲</span>
+          <p class="feature-song">${result.song}</p>
+          <div class="song-links">
+            <a class="button button-secondary button-link button-compact" href="${songLinks.youtube}" target="_blank" rel="noreferrer">
+              YouTube 試聽
+            </a>
+            <a class="button button-secondary button-link button-compact" href="${songLinks.spotify}" target="_blank" rel="noreferrer">
+              Spotify 搜尋
+            </a>
           </div>
-          <p>${result.analysis}</p>
         </article>
 
         <div class="result-overview-stack">
-          <article class="feature-block result-song-card">
-            <span class="feature-label">推薦歌曲</span>
-            <p class="feature-song">${result.song}</p>
-            <div class="song-links">
-              <a class="button button-secondary button-link button-compact" href="${songLinks.youtube}" target="_blank" rel="noreferrer">
-                YouTube 試聽
-              </a>
-              <a class="button button-secondary button-link button-compact" href="${songLinks.spotify}" target="_blank" rel="noreferrer">
-                Spotify 搜尋
-              </a>
+          <article class="copy-block result-spotlight">
+            <div class="section-stack">
+              <span class="feature-label">人格分析</span>
+              <h3>妳的感情，不太會只是剛好而已</h3>
             </div>
+            <p>${result.analysis}</p>
           </article>
 
           <article class="copy-block quote-block quote-card">
