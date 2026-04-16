@@ -360,7 +360,8 @@ select {
 
 .result-song-card,
 .quote-card {
-  min-height: 100%;
+  align-self: start;
+  align-content: start;
 }
 
 .meta-chips {
@@ -534,6 +535,41 @@ select {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 18px;
+}
+
+.song-story {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(31, 36, 48, 0.08);
+}
+
+.song-story-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.song-story-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.song-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.song-tag {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(31, 36, 48, 0.07);
+  color: var(--accent-deep);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .button-link {

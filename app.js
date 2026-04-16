@@ -364,6 +364,7 @@ function renderResult() {
   const { result, scores, intensity } = state.resultPayload;
   const profile = getProfileCopy(result.attribute, intensity);
   const songLinks = getSongLinks(result.song);
+  const songStory = getSongStory(state.resultPayload, profile);
   const details = resultDetails[state.resultPayload.key];
   const pairAnalysis = state.pairSeed ? getPairAnalysis(state.resultPayload, state.pairSeed) : null;
 
@@ -398,6 +399,19 @@ function renderResult() {
             <a class="button button-secondary button-link button-compact" href="${songLinks.spotify}" target="_blank" rel="noreferrer">
               Spotify 搜尋
             </a>
+          </div>
+          <div class="song-story">
+            <div class="song-story-copy">
+              <span class="detail-label">這首像妳的地方</span>
+              <p>${songStory.reason}</p>
+            </div>
+            <div class="song-story-copy">
+              <span class="detail-label">最適合播放的時刻</span>
+              <p>${songStory.timing}</p>
+            </div>
+            <div class="song-tags" aria-label="歌曲情緒標籤">
+              ${songStory.tags.map((tag) => `<span class="song-tag">${tag}</span>`).join('')}
+            </div>
           </div>
         </article>
 
@@ -606,6 +620,47 @@ function getSongLinks(song) {
   return {
     youtube: `https://www.youtube.com/results?search_query=${query}`,
     spotify: `https://open.spotify.com/search/${query}`
+  };
+}
+
+function getSongStory(resultPayload, profile) {
+  const dominantAxis = [...axisMeta]
+    .map((axis) => ({
+      ...axis,
+      score: resultPayload.scores[axis.key]
+    }))
+    .sort((left, right) => Math.abs(right.score) - Math.abs(left.score))[0];
+
+  const tags = [profile.role, profile.intensity, dominantAxis.score >= 0 ? dominantAxis.positive : dominantAxis.negative];
+
+  const reasonMap = {
+    c: dominantAxis.score >= 0
+      ? '這首歌先抓住人的，不只是旋律，而是那種很知道自己要什麼的氣場。妳的愛也有這種把節奏握在手裡的感覺。'
+      : '這首歌不是靠壓迫感取勝，而是靠一種願意陪人慢慢走進去的溫度。妳的愛也比較像這樣，柔軟但不空。',
+    e: dominantAxis.score >= 0
+      ? '它像妳在感情裡的張力，情緒一上來就很難裝作若無其事，會讓人一聽就知道妳不是淡淡喜歡。'
+      : '它不是那種一下子把情緒砸出來的歌，反而更像妳把很多感受含在心裡，越聽越有後勁。',
+    i: dominantAxis.score >= 0
+      ? '這首歌有一點拉扯、有一點征服感，像妳在心動時不只是想靠近，還想確認自己是不是能讓對方也失控。'
+      : '它最迷人的不是刺激，而是那種慢慢包進去的沉浸感。妳的愛也是，真正動心時會想把人安穩地留在自己身邊。'
+  };
+
+  let timing = '適合在剛測完、很想把這個結果丟給她看的時候播。';
+
+  if (resultPayload.intensity === 'EXT' && resultPayload.scores.e >= 0) {
+    timing = '適合在情緒剛被點燃、訊息打到一半又刪掉的時候播。';
+  } else if (resultPayload.intensity === 'EXT') {
+    timing = '適合在夜裡情緒開始往深處沉下去、表面還裝得很穩的時候播。';
+  } else if (resultPayload.scores.i < 0) {
+    timing = '適合在妳想慢慢靠近一個人，或者想把誰抱進自己節奏裡的時候播。';
+  } else if (resultPayload.scores.c >= 0) {
+    timing = '適合在妳已經知道自己想要什麼，只差一點點勇氣把節奏帶起來的時候播。';
+  }
+
+  return {
+    reason: reasonMap[dominantAxis.key],
+    timing,
+    tags
   };
 }
 
